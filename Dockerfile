@@ -4,12 +4,12 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy pom.xml to install dependencies
-COPY /c/DevOps/Maven-simple/maven-simple/pom.xml
+# Copy pom.xml and download dependencies
+COPY pom.xml .
 RUN mvn dependency:go-offline
 
-# Copy all Java source files
-COPY C:/DevOps/Maven-simple/maven-simple/src/main/java/com/github/jitpack/"App.java WebApp.java"
+# Copy all Java source files (the entire src folder)
+COPY src ./src
 
 # Build the JAR file (skip tests for faster build)
 RUN mvn clean package -DskipTests
@@ -21,11 +21,11 @@ RUN mvn clean package -DskipTests
 FROM openjdk:17-jdk-slim
 WORKDIR /app
 
-# Copy only the built JAR file from the previous stage
-COPY C:/DevOps/Maven-simple/maven-simple/target/maven-simple-0.2-SNAPSHOT.jar app.jar
+# Copy the built JAR file from previous stage
+COPY --from=build /app/target/maven-simple-0.2-SNAPSHOT.jar app.jar
 
-# Expose the same port as in WebApp.java 
+# Expose the same port as your WebApp.java
 EXPOSE 8083
 
-# Run the app
+# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
